@@ -17,13 +17,14 @@ type Card struct {
 	blockedAmounts BlockedAmount // non-exported field
 }
 
-// Storage struct for Cards
+// Storage struct representation for Cards
 type Storage struct {
 	sync.RWMutex
 	Cards map[uint64]*Card
 }
 
-// New Create a new card
+// New Creates a new card
+// Returns basic data from the new card and error
 func (s *Storage) New(name string) (*Card, error) {
 	var card Card
 
@@ -67,7 +68,8 @@ func (s *Storage) GetBalance(id uint64) (float64, float64, error) {
 	return 0, 0, errors.New("card doesn't exist")
 }
 
-// Deposit add amount of £ to the balance of a card with id (id)
+// Deposit adds an amount of £ to the balance of a card with id (id)
+// Returns the current balance and error
 func (s *Storage) Deposit(id uint64, amount float64) (float64, error) {
 
 	// Protection for concurrent use of the map Cards
@@ -82,7 +84,8 @@ func (s *Storage) Deposit(id uint64, amount float64) (float64, error) {
 	return 0, errors.New("card doesn't exist")
 }
 
-// BlockAuthRequest ...
+// BlockAuthRequest blocks an amount of £ based in the card ID
+// Returns the blocking ID to be used later to cancel or capture the £ & error
 func (s *Storage) BlockAuthRequest(cardID uint64, amount float64) (uint64, error) {
 
 	s.Lock()
@@ -106,7 +109,9 @@ func (s *Storage) BlockAuthRequest(cardID uint64, amount float64) (uint64, error
 	return 0, errors.New("card doesn't exist")
 }
 
-// CaptureRequest ...
+// CaptureRequest try to capture an mount of blocked £ by card id & blocking id
+// the amount is remove from blocked state
+// Returns the amount captured an error
 func (s *Storage) CaptureRequest(cardID, blockID uint64) (float64, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -121,8 +126,9 @@ func (s *Storage) CaptureRequest(cardID, blockID uint64) (float64, error) {
 	return 0, errors.New("card doesn't exist")
 }
 
-// CancelCaptureAuth ...
-func (s *Storage) CancelCaptureAuth(cardID, blockID uint64) error {
+// CancelBlockAuth cancels a Blocking Authotization by card id and blocking id
+// Returns error
+func (s *Storage) CancelBlockAuth(cardID, blockID uint64) error {
 	s.Lock()
 	defer s.Unlock()
 	if c, ok := s.Cards[cardID]; ok {

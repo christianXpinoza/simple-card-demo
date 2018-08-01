@@ -16,5 +16,5 @@ type Transaction struct {
 	Payload    []byte
 }
 
-// Representation of transactions
+// Transactions Representation of transactions
 type Transactions chan Transaction

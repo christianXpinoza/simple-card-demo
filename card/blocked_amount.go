@@ -5,18 +5,14 @@ import (
 	"sync"
 )
 
-// Blocked ...
-//type Blocked struct {
-//	Amount float64
-//}
-
-// BlockedAmount ...
+// BlockedAmount is a structure containing the blocked amounts of £
 type BlockedAmount struct {
 	sync.RWMutex
 	Amounts map[uint64]float64
 }
 
-// Append ...
+// Append adds a new blocked amount of £
+// Returns the index/id of the new blocked amount of £ & error
 func (b *BlockedAmount) Append(newBlockedAmount float64) (uint64, error) {
 	b.Lock()
 	defer b.Unlock()
@@ -27,7 +23,8 @@ func (b *BlockedAmount) Append(newBlockedAmount float64) (uint64, error) {
 	return n + 1, nil
 }
 
-// Delete ...
+// Delete removes a existing blocked amount of £
+// Returns error
 func (b *BlockedAmount) Delete(blockedAmountID uint64) error {
 	b.Lock()
 	defer b.Unlock()
@@ -39,7 +36,8 @@ func (b *BlockedAmount) Delete(blockedAmountID uint64) error {
 	return errors.New("item doesn't exist")
 }
 
-// Get ...
+// Get retrieves a blocked amount of £
+// Returns the blocked amount of £ for a existing blocking id
 func (b *BlockedAmount) Get(blockedAmountID uint64) (float64, error) {
 	b.Lock()
 	defer b.Unlock()
@@ -50,7 +48,8 @@ func (b *BlockedAmount) Get(blockedAmountID uint64) (float64, error) {
 	return 0, errors.New("item doesn't exist")
 }
 
-// GetTotal ...
+// GetTotal sums the total value stored as a blocked amount of £
+// Returns total amount of blocked £ & error
 func (b *BlockedAmount) GetTotal() (float64, error) {
 	b.Lock()
 	defer b.Unlock()
@@ -61,5 +60,4 @@ func (b *BlockedAmount) GetTotal() (float64, error) {
 		total += blocked
 	}
 	return total, nil
-
 }
