@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/christianXpinoza/simple-card/card"
+	"github.com/christianXpinoza/simple-card-demo/card"
 	"github.com/go-chi/chi"
 )
 

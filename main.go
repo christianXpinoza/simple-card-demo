@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/christianXpinoza/simple-card/api"
-	"github.com/christianXpinoza/simple-card/card"
+	"github.com/christianXpinoza/simple-card-demo/api"
+	"github.com/christianXpinoza/simple-card-demo/card"
 )
 
 func main() {
