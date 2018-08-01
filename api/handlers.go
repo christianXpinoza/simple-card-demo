@@ -83,7 +83,15 @@ func depositHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	log.Println(deposit)
+	_, err := cardService.Storage.Deposit(deposit.CardID, deposit.Amount)
+	if err != nil {
+		log.Println("error calling deposit function:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
