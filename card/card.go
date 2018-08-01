@@ -30,6 +30,7 @@ func (s *Storage) New(name string) (*Card, error) {
 	}{}
 
 	s.Lock()
+	defer s.Unlock()
 
 	err := faker.FakeData(&newCard)
 	if err != nil {
@@ -44,7 +45,6 @@ func (s *Storage) New(name string) (*Card, error) {
 		NameOnCard: name,
 		Balance:    0,
 	}
-	s.Unlock()
 
 	return s.Cards[id], nil
 }
@@ -61,11 +61,12 @@ func (s *Storage) GetBalance(id uint64) (float64, error) {
 func (s *Storage) Deposit(id uint64, amount float64) (float64, error) {
 
 	s.Lock()
+	defer s.Unlock()
+
 	if c, ok := s.Cards[id]; ok {
 		c.Balance += amount
 		return c.Balance, nil
 	}
-	s.Unlock()
 
 	return 0, errors.New("client doesn't exist")
 }
