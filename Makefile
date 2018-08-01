@@ -2,7 +2,9 @@ VERSION = 0.0.1
 BUILD = $(shell git rev-parse --short=6 HEAD)
 LDFLAGS = -v -ldflags "-X main.Version=$(VERSION) -X main.Build=$(BUILD)"
 DOCKER_REPO = chespinoza/simple-card-demo
+PACKAGES := $(shell go list ./... | grep -v /vendor/)
 BUILD_DIR = build
+GOTEST = go test -covermode=atomic 
 
 default: help
 
@@ -14,6 +16,10 @@ build: ## Build binaries for current host
 .PHONY: clean 
 clean: ## Clean files generated on build
 	rm -rf build/*
+
+.PHONY: test
+test: ## Run Tests into the packages
+	$(GOTEST) $(PACKAGES)
 
 .PHONY: docker 
 docker: ## Build binaries into docker container

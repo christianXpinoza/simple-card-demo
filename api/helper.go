@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Helper function to write json file in response writer
 func writeJSON(w http.ResponseWriter, data interface{}) {
 	jData, err := json.Marshal(data)
 	if err != nil {
