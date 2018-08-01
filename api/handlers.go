@@ -149,7 +149,7 @@ func cancelBlockingAuthHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := cardService.Storage.CancelCaptureAuth(blockingAuth.CardID, blockingAuth.BlockingID); err != nil {
+	if err := cardService.Storage.CancelBlockAuth(blockingAuth.CardID, blockingAuth.BlockingID); err != nil {
 		log.Println("error calling cancel capture auth", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
