@@ -55,11 +55,16 @@ func (s *Storage) New(name string) (*Card, error) {
 }
 
 // GetBalance return the balance for a client with card id (id)
-func (s *Storage) GetBalance(id uint64) (float64, error) {
+// Returns: Balance, Blocked Marked and error
+func (s *Storage) GetBalance(id uint64) (float64, float64, error) {
 	if c, ok := s.Cards[id]; ok {
-		return c.Balance, nil
+		blockedTotal, err := c.blockedAmounts.GetTotal()
+		if err != nil {
+			return 0, 0, err
+		}
+		return c.Balance, blockedTotal, nil
 	}
-	return 0, errors.New("client doesn't exist")
+	return 0, 0, errors.New("card doesn't exist")
 }
 
 // Deposit add amount of £ to the balance of a card with id (id)
@@ -74,7 +79,7 @@ func (s *Storage) Deposit(id uint64, amount float64) (float64, error) {
 		return c.Balance, nil
 	}
 
-	return 0, errors.New("client doesn't exist")
+	return 0, errors.New("card doesn't exist")
 }
 
 // BlockAuthRequest ...
@@ -84,20 +89,50 @@ func (s *Storage) BlockAuthRequest(cardID uint64, amount float64) (uint64, error
 	defer s.Unlock()
 
 	if c, ok := s.Cards[cardID]; ok {
-		totalBlocked, err := c.blockedAmounts.GetTotal()
-		if err != nil {
-			return 0, err
-		}
+
 		// The merchant can Block the amount
-		if c.Balance-totalBlocked >= amount {
+		if c.Balance >= amount {
 			blockID, err := c.blockedAmounts.Append(amount)
 			if err != nil {
 				return 0, err
 			}
+			// Blocked money is traspassed to blocked storing data structure
+			c.Balance -= amount
 			return blockID, nil
 		}
 		return 0, errors.New("not enough money")
 	}
 
 	return 0, errors.New("card doesn't exist")
+}
+
+// CaptureRequest ...
+func (s *Storage) CaptureRequest(cardID, blockID uint64) (float64, error) {
+	s.Lock()
+	defer s.Unlock()
+
+	if c, ok := s.Cards[cardID]; ok {
+		if captured, ok := c.blockedAmounts.Amounts[blockID]; ok {
+			delete(c.blockedAmounts.Amounts, blockID)
+			return captured, nil
+		}
+		return 0, errors.New("blockID doesnt exist")
+	}
+	return 0, errors.New("card doesn't exist")
+}
+
+// CancelCaptureAuth ...
+func (s *Storage) CancelCaptureAuth(cardID, blockID uint64) error {
+	s.Lock()
+	defer s.Unlock()
+	if c, ok := s.Cards[cardID]; ok {
+		if captured, ok := c.blockedAmounts.Amounts[blockID]; ok {
+			// returns the captured money to the available balance
+			c.Balance += captured
+			delete(c.blockedAmounts.Amounts, blockID)
+			return nil
+		}
+		return errors.New("block id doesn't exist")
+	}
+	return errors.New("card doesn't exist")
 }
