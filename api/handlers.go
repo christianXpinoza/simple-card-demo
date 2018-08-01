@@ -129,6 +129,7 @@ func captureHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("error calling CaptureRequest:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
 		return
 	}
 
@@ -140,7 +141,7 @@ func captureHandler(w http.ResponseWriter, r *http.Request) {
 func cancelBlockingAuthHandler(w http.ResponseWriter, r *http.Request) {
 	blockingAuth := struct {
 		CardID     uint64 `json:"card_id"`
-		AuthNumber uint64 `json:"auth_number"`
+		BlockingID uint64 `json:"blocking_auth_id"`
 	}{}
 
 	if err := json.NewDecoder(r.Body).Decode(&blockingAuth); err != nil {
@@ -148,7 +149,7 @@ func cancelBlockingAuthHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := cardService.Storage.CancelCaptureAuth(blockingAuth.CardID, blockingAuth.AuthNumber); err != nil {
+	if err := cardService.Storage.CancelCaptureAuth(blockingAuth.CardID, blockingAuth.BlockingID); err != nil {
 		log.Println("error calling cancel capture auth", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
