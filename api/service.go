@@ -27,7 +27,7 @@ func (s *Service) Start(addr string, cService *card.Service) error {
 	s.router.Get("/apiv1/clients/balance", balanceHandler)
 
 	// Merchants API portion
-	s.router.Post("/apiv1/transaction/block_auth", captureAuthHandler)
+	s.router.Post("/apiv1/transaction/block_auth", blockAuthHandler)
 	s.router.Delete("/apiv1/transaction/block_auth", deleteCaptureAuthHandler)
 	s.router.Post("/apiv1/transaction/capture", captureHandler)
 

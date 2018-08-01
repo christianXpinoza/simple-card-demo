@@ -13,6 +13,7 @@ type Transaction struct {
 	Status     string    `json:"status"`      // Transaction status []
 	ClientID   uint64    `json:"client_id"`   // Client ID
 	MerchantID uint64    `json:"merchant_id"` // Merchant ID
+	Payload    []byte
 }
 
 // Representation of transactions
