@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -13,6 +14,7 @@ func newClientHandler(w http.ResponseWriter, r *http.Request) {
 	client := struct {
 		NameOnCard string `json:"name"`
 	}{}
+
 	if err := json.NewDecoder(r.Body).Decode(&client); err != nil {
 		log.Println("error decoding JSON payload:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -28,15 +30,7 @@ func newClientHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json, err := json.Marshal(newCard)
-	if err != nil {
-		log.Println("error serializing card")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(json)
+	writeJSON(w, newCard)
 }
 
 // balanceHandler - Method: Get
@@ -57,17 +51,11 @@ func balanceHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("error getting balance:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("{'error':'card not found'}"))
 		return
 	}
 
-	json, err := json.Marshal(struct{ Balance float64 }{balance})
-	if err != nil {
-		log.Println("error serializing card")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(json)
+	writeJSON(w, struct{ Balance float64 }{balance})
 }
 
 // depositHandler - Method: POST
@@ -85,33 +73,48 @@ func depositHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println(deposit)
-	_, err := cardService.Storage.Deposit(deposit.CardID, deposit.Amount)
+	balance, err := cardService.Storage.Deposit(deposit.CardID, deposit.Amount)
 	if err != nil {
 		log.Println("error calling deposit function:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
+	writeJSON(w, struct{ Total float64 }{balance})
 }
 
 // Merchants Handlers
 
 // captureAuthHandler
 // payload to process: {"card_id":1, "amount":1000}
-func captureAuthHandler(w http.ResponseWriter, r *http.Request) {
-	deposit := struct {
+func blockAuthHandler(w http.ResponseWriter, r *http.Request) {
+	blocking := struct {
 		CardID uint64  `json:"card_id"`
 		Amount float64 `json:"amount"`
 	}{}
 
-	if err := json.NewDecoder(r.Body).Decode(&deposit); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&blocking); err != nil {
 		log.Println("error decoding JSON payload:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	log.Println(deposit)
+
+	log.Println(blocking)
+	blockingID, err := cardService.Storage.BlockAuthRequest(blocking.CardID, blocking.Amount)
+	if err != nil {
+		log.Println("error calling BlockAuthRequest:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
+		return
+	}
+
+	jData, err := json.Marshal(struct{ BlockingID uint64 }{blockingID})
+	if err != nil {
+		log.Println("error serializing blockingID")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
+	w.Write(jData)
 
 }
 
