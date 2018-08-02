@@ -2,7 +2,7 @@ package card
 
 import (
 	"errors"
-	"sync"
+	"log"
 	"time"
 )
 
@@ -20,7 +20,6 @@ type Transaction struct {
 
 // Transactions Log live representation
 type Transactions struct {
-	sync.RWMutex
 	Transaction map[uint64]*Transaction
 }
 
@@ -33,8 +32,6 @@ func NewTransactionInstance() *Transactions {
 
 // Add adds a new record
 func (t *Transactions) Add(txn *Transaction) uint64 {
-	t.Lock()
-	defer t.Unlock()
 
 	id := uint64(len(t.Transaction)) + 1
 	txn.ID = id
@@ -47,8 +44,6 @@ func (t *Transactions) Add(txn *Transaction) uint64 {
 
 // GetByCardID retrieves a slice of transaction without any limit at the moment by user ID
 func (t *Transactions) GetByCardID(id uint64) ([]Transaction, error) {
-	t.RLock()
-	defer t.RUnlock()
 
 	txns := []Transaction{}
 	for _, v := range t.Transaction {
@@ -56,6 +51,7 @@ func (t *Transactions) GetByCardID(id uint64) ([]Transaction, error) {
 			txns = append(txns, *v)
 		}
 	}
+	log.Println("len of transactions:", len(t.Transaction))
 	if len(txns) > 0 {
 		return txns, nil
 	}
@@ -64,8 +60,6 @@ func (t *Transactions) GetByCardID(id uint64) ([]Transaction, error) {
 
 // GetByMerchantID retrieves a slice of transactions without any limit at the moment by merchant ID
 func (t *Transactions) GetByMerchantID(id uint64) ([]Transaction, error) {
-	t.RLock()
-	defer t.RUnlock()
 
 	txns := []Transaction{}
 	for _, v := range t.Transaction {

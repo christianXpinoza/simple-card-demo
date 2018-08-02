@@ -21,7 +21,7 @@ type Card struct {
 type Storage struct {
 	sync.RWMutex
 	Cards        map[uint64]*Card
-	Transactions Transactions
+	Transactions *Transactions
 }
 
 // New Creates a new card
@@ -86,7 +86,7 @@ func (s *Storage) Deposit(cardID uint64, amount float64) (uint64, float64, error
 			Amount: amount,
 			Status: "done",
 		})
-
+		log.Println("deposit made, transaction id:", txnID)
 		return txnID, c.Balance, nil
 	}
 

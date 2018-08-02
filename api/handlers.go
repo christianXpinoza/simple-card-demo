@@ -54,8 +54,8 @@ func balanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, struct {
-		Balance float64
-		Blocked float64
+		Balance float64 `json:"balance"`
+		Blocked float64 `json:"blocked"`
 	}{balance, blocked})
 }
 
@@ -82,8 +82,8 @@ func depositHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, struct {
-		Total       float64
-		OperationID uint64
+		Total       float64 `json:"total"`
+		OperationID uint64  `json:"operation_id"`
 	}{balance, txnID})
 }
 
@@ -112,7 +112,9 @@ func blockAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, struct{ BlockingID uint64 }{blockingID})
+	writeJSON(w, struct {
+		BlockingID uint64 `json:"blocking_auth_id"`
+	}{blockingID})
 }
 
 // captureHandler
@@ -138,8 +140,8 @@ func captureHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, struct {
-		Captured    float64
-		OperationID uint64
+		Captured    float64 `json:"captured"`
+		OperationID uint64  `json:"operation_id"`
 	}{capturedAmount, txnID})
 }
 
@@ -162,30 +164,54 @@ func cancelBlockingAuthHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
 		return
 	}
-	writeJSON(w, struct{ Result string }{"ok"})
+	writeJSON(w, struct {
+		Result string `json:"result"`
+	}{"ok"})
 }
 
 // refundHandler
-// payload to process: {"card_id":1, "capture_id":1, "amount":1000}
+// payload to process: {"card_id":1, "operation_id":1, "amount":1000}
+// operation_id is the operation to reverse
 func refundHandler(w http.ResponseWriter, r *http.Request) {
 	refundData := struct {
-		CardID    uint64  `json:"card_id"`
-		CaptureID uint64  `json:"capture_id"`
-		Amount    float64 `json:"amount"`
+		CardID             uint64  `json:"card_id"`
+		CaptureOperationID uint64  `json:"operation_id"`
+		Amount             float64 `json:"amount"`
 	}{}
 	if err := json.NewDecoder(r.Body).Decode(&refundData); err != nil {
 		log.Println("error decoding JSON payload:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	txnID, err := cardService.Storage.Refund(refundData.CardID, refundData.CaptureID, refundData.Amount)
+	txnID, err := cardService.Storage.Refund(refundData.CardID, refundData.CaptureOperationID, refundData.Amount)
 	if err != nil {
 		log.Println("error calling refund :", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
+		return
 	}
 	writeJSON(w, struct {
-		Captured    float64
-		OperationID uint64
+		Refunded    float64 `json:"refunded_amount"`
+		OperationID uint64  `json:"operation_id"`
 	}{refundData.Amount, txnID})
+}
+
+// transactionStatementHandler will print txn statements
+func transactionStatementHandler(w http.ResponseWriter, r *http.Request) {
+	cardData := struct {
+		CardID uint64 `json:"card_id"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&cardData); err != nil {
+		log.Println("error decoding JSON payload:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	txns, err := cardService.Storage.Transactions.GetByCardID(cardData.CardID)
+	if err != nil {
+		log.Println("error calling transaction statement:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
+		return
+	}
+	writeJSON(w, txns)
 }
