@@ -27,7 +27,7 @@ func TestNewStorage(t *testing.T) {
 
 func TestDepositGetBalance(t *testing.T) {
 	cardService := setup()
-	deposited, err := cardService.Storage.Deposit(1, 1000)
+	_, deposited, err := cardService.Storage.Deposit(1, 1000)
 	assert.Nil(t, err)
 
 	balance, blocked, err := cardService.Storage.GetBalance(1)
@@ -68,7 +68,7 @@ func TestCaptureBlockAuth(t *testing.T) {
 	blockingID, err := cardService.Storage.BlockAuthRequest(cardID, 888)
 
 	if assert.Nil(t, err) {
-		captured, err := cardService.Storage.CaptureRequest(cardID, blockingID)
+		_, captured, err := cardService.Storage.CaptureRequest(cardID, blockingID)
 		if assert.Nil(t, err) {
 			assert.Equal(t, 888.0, captured)
 			balance, blocked, err := cardService.Storage.GetBalance(cardID)
@@ -78,4 +78,22 @@ func TestCaptureBlockAuth(t *testing.T) {
 		}
 	}
 
+}
+
+func TestRefunds(t *testing.T) {
+	cardService := setup()
+
+	cardID := uint64(len(cardService.Storage.Cards))
+	cardService.Storage.Deposit(cardID, 1888)
+
+	blockingID, err := cardService.Storage.BlockAuthRequest(cardID, 888)
+	captureID, _, err := cardService.Storage.CaptureRequest(cardID, blockingID)
+
+	_, err = cardService.Storage.Refund(cardID, captureID, 888)
+	assert.Nil(t, err)
+
+	balance, blocked, err := cardService.Storage.GetBalance(cardID)
+	assert.Nil(t, err)
+	assert.Equal(t, 1888.0, balance)
+	assert.Equal(t, 0.0, blocked)
 }

@@ -73,14 +73,18 @@ func depositHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	balance, err := cardService.Storage.Deposit(deposit.CardID, deposit.Amount)
+	txnID, balance, err := cardService.Storage.Deposit(deposit.CardID, deposit.Amount)
 	if err != nil {
 		log.Println("error calling deposit function:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
 		return
 	}
-	writeJSON(w, struct{ Total float64 }{balance})
+
+	writeJSON(w, struct {
+		Total       float64
+		OperationID uint64
+	}{balance, txnID})
 }
 
 // Merchants Handlers
@@ -125,7 +129,7 @@ func captureHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	capturedAmount, err := cardService.Storage.CaptureRequest(capture.CardID, capture.BlockingID)
+	txnID, capturedAmount, err := cardService.Storage.CaptureRequest(capture.CardID, capture.BlockingID)
 	if err != nil {
 		log.Println("error calling CaptureRequest:", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -133,7 +137,10 @@ func captureHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, struct{ Captured float64 }{capturedAmount})
+	writeJSON(w, struct {
+		Captured    float64
+		OperationID uint64
+	}{capturedAmount, txnID})
 }
 
 // cancelCaptureAuthHandler
@@ -155,6 +162,30 @@ func cancelBlockingAuthHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 	writeJSON(w, struct{ Result string }{"ok"})
+}
+
+// refundHandler
+// payload to process: {"card_id":1, "capture_id":1, "amount":1000}
+func refundHandler(w http.ResponseWriter, r *http.Request) {
+	refundData := struct {
+		CardID    uint64  `json:"card_id"`
+		CaptureID uint64  `json:"capture_id"`
+		Amount    float64 `json:"amount"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&refundData); err != nil {
+		log.Println("error decoding JSON payload:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	txnID, err := cardService.Storage.Refund(refundData.CardID, refundData.CaptureID, refundData.Amount)
+	if err != nil {
+		log.Println("error calling refund :", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("{'error':'%s'}", err.Error())))
+	}
+	writeJSON(w, struct {
+		Captured    float64
+		OperationID uint64
+	}{refundData.Amount, txnID})
 }

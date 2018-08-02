@@ -9,7 +9,7 @@ import (
 // Transaction representation
 type Transaction struct {
 	ID         uint64    `json:"id"`          // Unique Transaction ID
-	Kind       string    `json:"kind"`        // Transaction Kind [blockAuthReq, deposit, capture, cancelBlockAuth, Refund]
+	Kind       string    `json:"kind"`        // Basic Transaction Kinds [deposit, capture, Refund]
 	Datetime   time.Time `json:"datetime"`    // UTC date time
 	Amount     float64   `json:"amount"`      // amount of £ involved
 	Status     string    `json:"status"`      // Transaction status [pending, done]
@@ -32,7 +32,7 @@ func NewTransactionInstance() *Transactions {
 }
 
 // Add adds a new record
-func (t *Transactions) Add(txn *Transaction) {
+func (t *Transactions) Add(txn *Transaction) uint64 {
 	t.Lock()
 	defer t.Unlock()
 
@@ -42,6 +42,7 @@ func (t *Transactions) Add(txn *Transaction) {
 	txn.Status = "done"
 
 	t.Transaction[id] = txn
+	return id
 }
 
 // GetByCardID retrieves a slice of transaction without any limit at the moment by user ID

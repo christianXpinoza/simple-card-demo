@@ -11,6 +11,7 @@ type Service struct {
 func New() *Service {
 	var storage Storage
 	storage.Cards = make(map[uint64]*Card)
+	storage.Transactions.Transaction = make(map[uint64]*Transaction)
 
 	return &Service{
 		Storage: storage,
