@@ -13,5 +13,5 @@ RUN apk --no-cache add \
     ca-certificates
 WORKDIR /app
 EXPOSE 8080
-COPY --from=builder /go/src/github.com/christianXpinoza/simple-card-demo/build/simple-card  /app/
+COPY --from=builder /go/src/github.com/christianXpinoza/simple-card-demo/build/simple-card-demo  /app/
 CMD /app/server
