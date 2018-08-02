@@ -4,6 +4,21 @@
 
 `make build`
 
+## Help 
+run
+`make`
+
+```
+Please use 'make <target>' where <target> is ...
+build                          Build binaries for current host
+clean                          Clean files generated on build
+docker                         Build binaries into docker container
+help                           Help
+test                           Run Tests into the packages
+```
+## How to run
+After run `make build` run `build/simple-card-demo`
+
 ## Example of use following a basic flow to simulate normal operation
 
 ### Create a new card
