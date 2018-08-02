@@ -39,6 +39,6 @@ func (s *Service) Start(addr string, cService *card.Service) error {
 
 // New return a new instance of the API service
 func New() *Service {
-	a := new(Service)
-	return a
+	s := new(Service)
+	return s
 }
